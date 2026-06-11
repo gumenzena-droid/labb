@@ -102,7 +102,7 @@
   </div></section>
   <section id="profile" class="screen"><div class="header"><button class="back" onclick="navigate('home')">‹</button><h2>Профиль</h2></div>
     <div class="glass card message-day-card"><span class="tag">Игра</span><div class="message-day-top"><div class="message-day-visual"><div class="message-card card-a"></div><div class="message-card card-b"></div></div><div class="message-day-title"><h3>Послание дня</h3><p>Откройте метафорическую игру-поддержку и получите вдохновляющее послание дня для риэлтора.</p></div></div><a class="open" href="https://gumenzena-droid.github.io/igra-/index.html/" target="_blank" rel="noopener">Открыть послание дня ↗</a></div>
-    <div class="glass card"><span class="tag">Мой рост</span><h3>Точка А → Точка B</h3><p>Заполните стартовую точку А в начале обучения, а в финале — точку B. Данные сохраняются в этом браузере и отображаются только в вашем профиле.</p><div class="note"><b>Важно:</b> если открыть сервис с другого устройства, в другом браузере, в режиме инкогнито или очистить данные сайта, сохранённый дашборд может не отображаться.</div><div class="profile-actions"><div class="profile-action-row"><button class="open" onclick="showGrowthForm('A')">Заполнить точку А</button><button class="open" onclick="showGrowthForm('B')">Заполнить точку B</button></div><div class="profile-action-row"><button class="open" onclick="createGrowthPdf('A')">Сформировать PDF точки А</button><button class="open" onclick="createGrowthPdf('B')">Сформировать PDF A → B</button></div></div></div>
+    <div class="glass card"><span class="tag">Мой рост</span><h3>Точка А → Точка B</h3><p>Заполните стартовую точку А в начале обучения, а в финале — точку B. Данные сохраняются в этом браузере и отображаются только в вашем профиле.</p><div class="note"><b>Важно:</b> если открыть сервис с другого устройства, в другом браузере, в режиме инкогнито или очистить данные сайта, сохранённый дашборд может не отображаться.</div><div class="profile-actions"><div class="profile-action-row"><button class="open" onclick="showGrowthForm('A')">Заполнить точку А</button><button class="open" onclick="showGrowthForm('B')">Заполнить точку B</button></div><div class="profile-action-row"><button class="open" onclick="createGrowthImage('A')">Скачать картинку точки А</button><button class="open" onclick="createGrowthImage('B')">Скачать картинку A → B</button></div></div></div>
     <div id="growthFormA" class="glass card profile-form"></div>
     <div id="growthFormB" class="glass card profile-form"></div>
     <div id="growthDashboard" class="glass card"></div>
@@ -171,49 +171,93 @@ function collectGrowthPoint(type){const point={date:new Date().toLocaleDateStrin
 function saveGrowthPoint(type){const data=getGrowthData();data[type]=collectGrowthPoint(type);setGrowthData(data);renderGrowthDashboard();hideGrowthForms();toast(`Точка ${type} сохранена ✨`)}
 function metricBar(label,valA,valB){const a=Number(valA||0),b=Number(valB||0),delta=b&&a?b-a:0;return `<div class="metric-row"><div class="metric-top"><span>${label}</span><span>${a?`A: ${a}`:'A: —'} ${b?`→ B: ${b}`:''} ${b&&a?`(${delta>0?'+':''}${delta})`:''}</span></div><div class="compare"><div class="bar"><span style="width:${a*10}%"></span></div>${b?`<div class="bar"><span style="width:${b*10}%"></span></div>`:''}</div></div>`}
 function renderGrowthDashboard(){const wrap=document.getElementById('growthDashboard');if(!wrap)return;const data=getGrowthData();const A=data.A,B=data.B;if(!A&&!B){wrap.innerHTML='<span class="tag">Дашборд</span><h3>Личная траектория роста</h3><div class="empty-dash">Пока данные не заполнены. Нажмите «Заполнить точку А», чтобы зафиксировать стартовые показатели и увидеть первый дашборд.</div>';return}const avgA=avgPoint(A),avgB=avgPoint(B);wrap.innerHTML=`<span class="tag">Дашборд</span><h3>Личная траектория роста</h3><p>${A?`Точка А сохранена: ${A.date}.`:''} ${B?`Точка B сохранена: ${B.date}.`:''}</p><div class="dash-grid"><div class="dash-tile"><small>Средний показатель А</small><b>${avgA||'—'}</b></div><div class="dash-tile"><small>Средний показатель B</small><b>${avgB||'—'}</b></div><div class="dash-tile"><small>Доход / точка А</small><b>${escapeHTML(A?.money||'—')}</b></div><div class="dash-tile"><small>Заявки / точка А</small><b>${escapeHTML(A?.leads||'—')}</b></div>${B?`<div class="dash-tile"><small>Доход / точка B</small><b>${escapeHTML(B.money||'—')}</b></div><div class="dash-tile"><small>Заявки / точка B</small><b>${escapeHTML(B.leads||'—')}</b></div>`:''}</div><div style="margin-top:18px">${growthQuestions.map(q=>metricBar(q.label,A?.[q.key],B?.[q.key])).join('')}</div>${A?.comment?`<div class="note"><b>Комментарий точки А:</b> ${escapeHTML(A.comment)}</div>`:''}${B?.comment?`<div class="note"><b>Комментарий точки B:</b> ${escapeHTML(B.comment)}</div>`:''}`}
-function loadHtml2Pdf(){
+function loadHtml2Canvas(){
  return new Promise((resolve,reject)=>{
-  if(window.html2pdf){resolve();return}
+  if(window.html2canvas){resolve();return}
   const script=document.createElement('script');
-  script.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+  script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
   script.onload=()=>resolve();
-  script.onerror=()=>reject(new Error('html2pdf load failed'));
+  script.onerror=()=>reject(new Error('html2canvas load failed'));
   document.head.appendChild(script);
  })
 }
-async function createGrowthPdf(mode){
+async function createGrowthImage(mode){
  const data=getGrowthData();
  if(mode==='A'&&!data.A){toast('Сначала заполните точку А');return}
  if(mode==='B'&&!data.B){toast('Сначала заполните точку B');return}
  const A=data.A,B=data.B;
  const avgA=avgPoint(A),avgB=avgPoint(B);
- const rows=growthQuestions.map(q=>`<tr><td>${escapeHTML(q.label)}</td><td>${A?.[q.key]||'—'}</td><td>${B?.[q.key]||'—'}</td><td>${A&&B?(B[q.key]-A[q.key]>0?'+':'')+(B[q.key]-A[q.key]):'—'}</td></tr>`).join('');
+ const rows=growthQuestions.map(q=>{
+   const aVal=A?.[q.key]||'—';
+   const bVal=B?.[q.key]||'—';
+   const diff=A&&B?((B[q.key]-A[q.key]>0?'+':'')+(B[q.key]-A[q.key])):'—';
+   return mode==='A'
+     ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;color:#22313f">${escapeHTML(q.label)}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;font-weight:700;color:#0b7f3b;text-align:right">${aVal}/10</td></tr>`
+     : `<tr><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;color:#22313f">${escapeHTML(q.label)}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;text-align:center;color:#22313f">${aVal}/10</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;text-align:center;color:#22313f">${bVal}/10</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;font-weight:700;text-align:center;color:${(A&&B&&B[q.key]-A[q.key]>=0)?'#0b7f3b':'#b71c1c'}">${diff}</td></tr>`;
+ }).join('');
  const report=document.createElement('div');
- report.className='pdf-report';
- report.innerHTML=`<div style="background:#ffffff;color:#111;font-family:Arial,sans-serif;padding:34px;width:760px;box-sizing:border-box">
-  <h1 style="margin:0 0 8px;font-size:30px">SHILO 50 — отчёт участника</h1>
-  <div style="color:#555;margin-bottom:18px">${mode==='A'?'Отчёт по точке А':'Итоговый отчёт А → B'} · сформировано ${new Date().toLocaleDateString('ru-RU')}</div>
-  <div style="border:1px solid #ddd;border-radius:14px;padding:16px;margin:12px 0;background:#fafafa"><b>Участник:</b> ${escapeHTML(A?.name||B?.name||'—')}<br><b>Город:</b> ${escapeHTML(A?.city||B?.city||'—')}<br><b>Специализация:</b> ${escapeHTML(A?.role||B?.role||'—')}</div>
-  <div style="border:1px solid #ddd;border-radius:14px;padding:16px;margin:12px 0;background:#fafafa"><h2 style="margin:0 0 12px;font-size:22px">Ключевые показатели</h2><p>Средний показатель точки А: <b style="font-size:28px">${avgA||'—'}</b></p><p>Средний показатель точки B: <b style="font-size:28px">${avgB||'—'}</b></p><p>Доход А: ${escapeHTML(A?.money||'—')} · Доход B: ${escapeHTML(B?.money||'—')}</p><p>Заявки А: ${escapeHTML(A?.leads||'—')} · Заявки B: ${escapeHTML(B?.leads||'—')}</p></div>
-  <h2 style="margin-top:26px;font-size:22px">Матрица показателей</h2>
-  <table style="width:100%;border-collapse:collapse;margin-top:14px"><thead><tr><th style="border:1px solid #ddd;padding:9px;text-align:left;background:#f2f2f2;font-size:13px">Параметр</th><th style="border:1px solid #ddd;padding:9px;text-align:left;background:#f2f2f2;font-size:13px">Точка А</th><th style="border:1px solid #ddd;padding:9px;text-align:left;background:#f2f2f2;font-size:13px">Точка B</th><th style="border:1px solid #ddd;padding:9px;text-align:left;background:#f2f2f2;font-size:13px">Динамика</th></tr></thead><tbody>${rows.replaceAll('<td>','<td style="border:1px solid #ddd;padding:9px;text-align:left;font-size:13px">')}</tbody></table>
-  ${A?.comment?`<div style="border:1px solid #ddd;border-radius:14px;padding:16px;margin:12px 0;background:#fafafa"><b>Комментарий точки А:</b><br>${escapeHTML(A.comment)}</div>`:''}
-  ${B?.comment?`<div style="border:1px solid #ddd;border-radius:14px;padding:16px;margin:12px 0;background:#fafafa"><b>Комментарий точки B:</b><br>${escapeHTML(B.comment)}</div>`:''}
+ report.style.position='fixed';
+ report.style.left='-99999px';
+ report.style.top='0';
+ report.style.width='1080px';
+ report.style.background='#ffffff';
+ report.style.zIndex='-1';
+ report.innerHTML=`<div style="background:linear-gradient(180deg,#f8fffa 0%,#ffffff 18%);color:#111;font-family:Arial,sans-serif;padding:48px 46px 56px;width:1080px;box-sizing:border-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:24px">
+   <div>
+    <div style="display:inline-block;padding:8px 14px;border-radius:999px;background:#ecfff1;color:#0b7f3b;border:1px solid #bde8c7;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase">Shilo 50</div>
+    <h1 style="margin:16px 0 8px;font-size:38px;line-height:1.1;color:#101820">${mode==='A'?'Фиксация точки А':'Фиксация точки А и B'}</h1>
+    <div style="font-size:18px;color:#536471;line-height:1.5">Отчёт участника для проверки результатов обучения</div>
+   </div>
+   <div style="text-align:right;font-size:15px;color:#536471;line-height:1.6"><b style="color:#101820">Дата создания:</b><br>${new Date().toLocaleDateString('ru-RU')}</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:16px;margin-bottom:18px">
+   <div style="border:1px solid #dfe7ea;border-radius:22px;padding:20px;background:#ffffff">
+    <div style="font-size:12px;font-weight:800;letter-spacing:.12em;color:#6b7b88;text-transform:uppercase;margin-bottom:12px">Участник</div>
+    <div style="font-size:16px;line-height:1.8;color:#22313f"><b>Имя:</b> ${escapeHTML(A?.name||B?.name||'—')}<br><b>Город:</b> ${escapeHTML(A?.city||B?.city||'—')}<br><b>Специализация:</b> ${escapeHTML(A?.role||B?.role||'—')}</div>
+   </div>
+   <div style="border:1px solid #dfe7ea;border-radius:22px;padding:20px;background:#ffffff">
+    <div style="font-size:12px;font-weight:800;letter-spacing:.12em;color:#6b7b88;text-transform:uppercase;margin-bottom:12px">Точка А</div>
+    <div style="font-size:16px;line-height:1.8;color:#22313f"><b>Средний балл:</b> ${avgA||'—'}<br><b>Доход:</b> ${escapeHTML(A?.money||'—')}<br><b>Заявки:</b> ${escapeHTML(A?.leads||'—')}</div>
+   </div>
+   <div style="border:1px solid #dfe7ea;border-radius:22px;padding:20px;background:#ffffff">
+    <div style="font-size:12px;font-weight:800;letter-spacing:.12em;color:#6b7b88;text-transform:uppercase;margin-bottom:12px">${mode==='A'?'Комментарий':'Точка B'}</div>
+    <div style="font-size:16px;line-height:1.8;color:#22313f">${mode==='A'?`${escapeHTML(A?.comment||'—')}`:`<b>Средний балл:</b> ${avgB||'—'}<br><b>Доход:</b> ${escapeHTML(B?.money||'—')}<br><b>Заявки:</b> ${escapeHTML(B?.leads||'—')}`}</div>
+   </div>
+  </div>
+
+  ${mode==='B' ? `<div style="border:1px solid #dfe7ea;border-radius:22px;padding:18px 20px;background:#ffffff;margin-bottom:18px"><div style="font-size:12px;font-weight:800;letter-spacing:.12em;color:#6b7b88;text-transform:uppercase;margin-bottom:10px">Комментарий точки B</div><div style="font-size:15px;line-height:1.65;color:#22313f">${escapeHTML(B?.comment||'—')}</div></div>` : ''}
+
+  <div style="border:1px solid #dfe7ea;border-radius:24px;overflow:hidden;background:#ffffff">
+   <div style="padding:18px 20px;background:linear-gradient(90deg,#effff3,#f5fbff);border-bottom:1px solid #dfe7ea;font-size:22px;font-weight:800;color:#101820">${mode==='A'?'Показатели точки А':'Сравнение показателей'}</div>
+   <table style="width:100%;border-collapse:collapse">
+    <thead>
+     ${mode==='A'
+      ? `<tr><th style="padding:14px 16px;text-align:left;background:#f8fafb;color:#6b7b88;font-size:13px;text-transform:uppercase;letter-spacing:.08em">Параметр</th><th style="padding:14px 16px;text-align:right;background:#f8fafb;color:#6b7b88;font-size:13px;text-transform:uppercase;letter-spacing:.08em">Точка А</th></tr>`
+      : `<tr><th style="padding:14px 16px;text-align:left;background:#f8fafb;color:#6b7b88;font-size:13px;text-transform:uppercase;letter-spacing:.08em">Параметр</th><th style="padding:14px 16px;text-align:center;background:#f8fafb;color:#6b7b88;font-size:13px;text-transform:uppercase;letter-spacing:.08em">Точка А</th><th style="padding:14px 16px;text-align:center;background:#f8fafb;color:#6b7b88;font-size:13px;text-transform:uppercase;letter-spacing:.08em">Точка B</th><th style="padding:14px 16px;text-align:center;background:#f8fafb;color:#6b7b88;font-size:13px;text-transform:uppercase;letter-spacing:.08em">Динамика</th></tr>`}
+    </thead>
+    <tbody>${rows}</tbody>
+   </table>
+  </div>
+
+  <div style="margin-top:18px;font-size:13px;color:#6b7b88;line-height:1.6">Этот файл создан внутри сервиса SHILO 50 и предназначен для отправки на проверку куратору.</div>
  </div>`;
- const filename=mode==='A'?'SHILO50_tochka_A.pdf':'SHILO50_otchet_A_B.pdf';
+ document.body.appendChild(report);
  try{
-  toast('Создаю PDF-файл...');
-  await loadHtml2Pdf();
-  await html2pdf().set({
-   margin:8,
-   filename,
-   html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
-   jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).from(report).save();
-  toast('PDF скачан в загрузки ✨');
+  toast('Создаю картинку...');
+  await loadHtml2Canvas();
+  const canvas = await html2canvas(report.firstElementChild,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+  const link=document.createElement('a');
+  link.href=canvas.toDataURL('image/png',1.0);
+  link.download=mode==='A'?'SHILO50_tochka_A.png':'SHILO50_otchet_A_B.png';
+  link.click();
+  toast('Картинка скачана в загрузки ✨');
  }catch(e){
   console.error(e);
-  toast('Не удалось скачать PDF. Проверьте интернет и разрешение на загрузки.');
+  toast('Не удалось скачать картинку. Проверьте интернет и разрешение на загрузки.');
+ }finally{
+  report.remove();
  }
 }
 
