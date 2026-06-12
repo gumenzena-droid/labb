@@ -187,13 +187,36 @@ async function createGrowthImage(mode){
  if(mode==='B'&&!data.B){toast('Сначала заполните точку B');return}
  const A=data.A,B=data.B;
  const avgA=avgPoint(A),avgB=avgPoint(B);
- const rows=growthQuestions.map(q=>{
-   const aVal=A?.[q.key]||'—';
-   const bVal=B?.[q.key]||'—';
-   const diff=A&&B?((B[q.key]-A[q.key]>0?'+':'')+(B[q.key]-A[q.key])):'—';
+ const reportQuestions=[
+   {key:'money',label:'Доход за месяц / ориентир',type:'text'},
+   {key:'leads',label:'Входящие заявки в месяц',type:'text'},
+   ...growthQuestions.map(q=>({...q,type:'scale'}))
+ ];
+ const rows=reportQuestions.map(q=>{
+   const aVal=A?.[q.key]??'—';
+   const bVal=B?.[q.key]??'—';
+   const aDisplay=q.type==='scale'&&aVal!=='—'?`${aVal}/10`:escapeHTML(aVal);
+   const bDisplay=q.type==='scale'&&bVal!=='—'?`${bVal}/10`:escapeHTML(bVal);
+   let diff='—';
+   let diffColor='#22313f';
+   if(mode!=='A' && A && B){
+     if(q.type==='scale'){
+       const delta=Number(B[q.key]||0)-Number(A[q.key]||0);
+       diff=(delta>0?'+':'')+delta;
+       diffColor=delta>=0?'#0b7f3b':'#b71c1c';
+     }else if(q.key==='leads'){
+       const aNum=Number(String(A[q.key]||'').replace(',', '.'));
+       const bNum=Number(String(B[q.key]||'').replace(',', '.'));
+       if(!Number.isNaN(aNum)&&!Number.isNaN(bNum)&&String(A[q.key]||'')!==''&&String(B[q.key]||'')!==''){
+         const delta=bNum-aNum;
+         diff=(delta>0?'+':'')+delta;
+         diffColor=delta>=0?'#0b7f3b':'#b71c1c';
+       }
+     }
+   }
    return mode==='A'
-     ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;color:#22313f">${escapeHTML(q.label)}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;font-weight:700;color:#0b7f3b;text-align:right">${aVal}/10</td></tr>`
-     : `<tr><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;color:#22313f">${escapeHTML(q.label)}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;text-align:center;color:#22313f">${aVal}/10</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;text-align:center;color:#22313f">${bVal}/10</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;font-weight:700;text-align:center;color:${(A&&B&&B[q.key]-A[q.key]>=0)?'#0b7f3b':'#b71c1c'}">${diff}</td></tr>`;
+     ? `<tr><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;color:#22313f">${escapeHTML(q.label)}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;font-weight:700;color:#0b7f3b;text-align:right">${aDisplay}</td></tr>`
+     : `<tr><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;color:#22313f">${escapeHTML(q.label)}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;text-align:center;color:#22313f">${aDisplay}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;text-align:center;color:#22313f">${bDisplay}</td><td style="padding:14px 16px;border-bottom:1px solid #e8ecef;font-size:15px;font-weight:700;text-align:center;color:${diffColor}">${diff}</td></tr>`;
  }).join('');
  const report=document.createElement('div');
  report.style.position='fixed';
